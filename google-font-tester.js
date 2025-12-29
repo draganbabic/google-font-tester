@@ -155,7 +155,7 @@
       bottom: 50px;
       right: 0;
       width: 320px;
-      max-height: 450px;
+      height: calc(100vh - 90px);
       background: #1a1a1a;
       color: #e5e5e5;
       border-radius: 12px;
@@ -165,14 +165,15 @@
     }
     #gft-panel.open { display: flex; }
     #gft-header {
-      padding: 16px;
+      padding: 12px;
       border-bottom: 1px solid #333;
+      flex-shrink: 0;
     }
     #gft-title-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
     #gft-title {
       font-weight: 600;
@@ -194,8 +195,8 @@
     }
     #gft-search {
       width: 100%;
-      padding: 10px 12px;
-      margin-top: 12px;
+      padding: 8px 10px;
+      margin-top: 8px;
       background: #2a2a2a;
       border: 1px solid #333;
       border-radius: 6px;
@@ -229,9 +230,9 @@
     #gft-controls {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      margin-top: 10px;
-      padding-top: 10px;
+      gap: 6px;
+      margin-top: 8px;
+      padding-top: 8px;
       border-top: 1px solid #333;
     }
     .gft-control-row {
@@ -325,7 +326,7 @@
     .gft-divider {
       height: 1px;
       background: #333;
-      margin: 12px 0;
+      margin: 8px 0;
     }
     #gft-categories {
       display: flex;
@@ -353,7 +354,7 @@
     #gft-list {
       flex: 1;
       overflow-y: auto;
-      max-height: 280px;
+      min-height: 0;
     }
     #gft-list::-webkit-scrollbar { width: 8px; }
     #gft-list::-webkit-scrollbar-track { background: #1a1a1a; }
@@ -375,11 +376,12 @@
       color: #fff;
     }
     #gft-current {
-      padding: 12px 16px;
+      padding: 10px 12px;
       background: #222;
       border-top: 1px solid #333;
       font-size: 12px;
       color: #888;
+      flex-shrink: 0;
     }
   `;
   document.head.appendChild(style);
