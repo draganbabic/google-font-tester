@@ -133,37 +133,70 @@
       font-family: system-ui, -apple-system, sans-serif;
       font-size: 14px;
     }
-    #gft-toggle {
-      background: #1a1a1a;
-      color: #fff;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 500;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      transition: transform 0.15s, box-shadow 0.15s;
-    }
-    #gft-toggle:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
-    }
     #gft-panel {
-      display: none;
-      position: absolute;
-      bottom: 50px;
-      right: 0;
-      width: 320px;
-      height: calc(100vh - 90px);
+      display: flex;
+      flex-direction: column;
+      width: 44px;
+      height: 40px;
       background: #1a1a1a;
       color: #e5e5e5;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      overflow: hidden;
+      cursor: pointer;
+      transition: width 0.2s ease, height 0.2s ease, border-radius 0.2s ease, box-shadow 0.2s ease;
+    }
+    #gft-panel:hover:not(.open) {
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+    #gft-panel.open {
+      width: 320px;
+      height: calc(100vh - 40px);
       border-radius: 12px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-      overflow: hidden;
-      flex-direction: column;
+      cursor: default;
     }
-    #gft-panel.open { display: flex; }
+    #gft-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      font-size: 14px;
+      font-weight: 500;
+      flex-shrink: 0;
+      transition: opacity 0.2s ease;
+    }
+    #gft-panel.open #gft-trigger {
+      display: none;
+    }
+    #gft-content {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease 0.1s;
+    }
+    #gft-panel.open #gft-content {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #gft-close {
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0;
+      margin-left: 8px;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    #gft-close:hover {
+      color: #fff;
+    }
     #gft-header {
       padding: 12px;
       border-bottom: 1px solid #333;
@@ -174,6 +207,10 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 8px;
+    }
+    #gft-title-actions {
+      display: flex;
+      align-items: center;
     }
     #gft-title {
       font-weight: 600;
@@ -390,13 +427,17 @@
   const widget = document.createElement('div');
   widget.id = 'gft-picker';
   widget.innerHTML = `
-    <button id="gft-toggle">Aa</button>
     <div id="gft-panel">
-      <div id="gft-header">
-        <div id="gft-title-row">
-          <span id="gft-title">Font Preview</span>
-          <button id="gft-reset">Reset</button>
-        </div>
+      <div id="gft-trigger">Aa</div>
+      <div id="gft-content">
+        <div id="gft-header">
+          <div id="gft-title-row">
+            <span id="gft-title">Font Preview</span>
+            <div id="gft-title-actions">
+              <button id="gft-reset">Reset</button>
+              <button id="gft-close">&times;</button>
+            </div>
+          </div>
         <input id="gft-selector" type="text" placeholder="body">
         <div id="gft-controls">
           <div class="gft-control-row">
@@ -430,9 +471,10 @@
           <button class="gft-cat" data-category="monospace">Mono</button>
         </div>
         <input id="gft-search" type="text" placeholder="Search fonts...">
+        </div>
+        <div id="gft-list"></div>
+        <div id="gft-current">Current: Default</div>
       </div>
-      <div id="gft-list"></div>
-      <div id="gft-current">Current: Default</div>
     </div>
   `;
 
@@ -440,8 +482,9 @@
   function init() {
     document.body.appendChild(widget);
 
-    const toggle = document.getElementById('gft-toggle');
     const panel = document.getElementById('gft-panel');
+    const trigger = document.getElementById('gft-trigger');
+    const closeBtn = document.getElementById('gft-close');
     const search = document.getElementById('gft-search');
     const selector = document.getElementById('gft-selector');
     const weightSelect = document.getElementById('gft-weight');
@@ -463,14 +506,20 @@
     const defaultFont = getComputedStyle(document.body).fontFamily.split(',')[0].replace(/['"]/g, '');
     current.textContent = `Current: ${defaultFont}`;
 
-    // Toggle panel
-    toggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      panel.classList.toggle('open');
-      if (panel.classList.contains('open')) {
+    // Open panel when clicking trigger or collapsed panel
+    panel.addEventListener('click', (e) => {
+      if (!panel.classList.contains('open')) {
+        e.stopPropagation();
+        panel.classList.add('open');
         renderFonts();
-        search.focus();
+        setTimeout(() => search.focus(), 200);
       }
+    });
+
+    // Close panel
+    closeBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      panel.classList.remove('open');
     });
 
     // Close on outside click
