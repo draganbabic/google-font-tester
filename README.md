@@ -2,6 +2,8 @@
 
 A lightweight widget for previewing Google Fonts on any website. Add one line of code and get a floating font picker that lets you instantly test 80+ popular fonts.
 
+![Google Font Tester Panel](google-font-tester-panel.png)
+
 ## Installation
 
 Add this to your HTML:
