@@ -15,9 +15,14 @@
  *   - Search through 80+ popular Google Fonts
  *   - Filter by category: Sans, Serif, Display, Script, Mono
  *   - Custom CSS selector to target specific elements (defaults to body)
+ *   - Font weight selector (300-900)
+ *   - Font size input (supports any CSS unit, defaults to px)
+ *   - Line height slider
+ *   - Force !important option to override existing styles
+ *   - Live preview updates as you adjust settings
  *   - Lazy-loads fonts as you scroll for performance
  *   - Click any font to preview it on your site
- *   - Reset button to restore original fonts
+ *   - Reset button to restore original styles
  *   - Nothing persists - refresh to reset
  *
  * License: MIT
@@ -115,6 +120,7 @@
   let currentCategory = 'all';
   let loadedFonts = new Set();
   let originalFonts = new Map(); // stores original fonts for targeted elements
+  let currentFont = null; // tracks currently applied font for live updates
 
   // Inject styles
   const style = document.createElement('style');
@@ -219,6 +225,102 @@
     #gft-selector::placeholder {
       color: #666;
     }
+    #gft-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #333;
+    }
+    .gft-control-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #gft-weight {
+      flex: 1;
+      padding: 6px 8px;
+      background: #2a2a2a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+      outline: none;
+    }
+    #gft-weight:focus {
+      border-color: #0057ff;
+    }
+    #gft-size {
+      width: 70px;
+      padding: 6px 8px;
+      background: #2a2a2a;
+      border: 1px solid #333;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 12px;
+      font-family: monospace;
+      outline: none;
+    }
+    #gft-size:focus {
+      border-color: #0057ff;
+    }
+    #gft-size::placeholder {
+      color: #666;
+    }
+    .gft-control-row label {
+      font-size: 12px;
+      color: #888;
+      white-space: nowrap;
+    }
+    #gft-line-height {
+      flex: 1;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #333;
+      border-radius: 2px;
+      outline: none;
+    }
+    #gft-line-height::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      background: #0057ff;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    #gft-line-height::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      background: #0057ff;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+    }
+    #gft-lh-value {
+      font-size: 11px;
+      color: #888;
+      font-family: monospace;
+      min-width: 28px;
+      text-align: right;
+    }
+    .gft-important-row {
+      justify-content: flex-start;
+    }
+    .gft-important-row label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+    #gft-important {
+      width: 14px;
+      height: 14px;
+      accent-color: #0057ff;
+      cursor: pointer;
+    }
     #gft-categories {
       display: flex;
       gap: 6px;
@@ -290,6 +392,28 @@
         </div>
         <input id="gft-search" type="text" placeholder="Search fonts...">
         <input id="gft-selector" type="text" placeholder="body">
+        <div id="gft-controls">
+          <div class="gft-control-row">
+            <select id="gft-weight">
+              <option value="300">300 Light</option>
+              <option value="400" selected>400 Regular</option>
+              <option value="500">500 Medium</option>
+              <option value="600">600 Semi-Bold</option>
+              <option value="700">700 Bold</option>
+              <option value="800">800 Extra-Bold</option>
+              <option value="900">900 Black</option>
+            </select>
+            <input id="gft-size" type="text" placeholder="Size">
+          </div>
+          <div class="gft-control-row">
+            <label>Line Height</label>
+            <input id="gft-line-height" type="range" min="-0.5" max="5" step="0.1" value="1.5">
+            <span id="gft-lh-value">1.5</span>
+          </div>
+          <div class="gft-control-row gft-important-row">
+            <label><input id="gft-important" type="checkbox"> Force !important</label>
+          </div>
+        </div>
         <div id="gft-categories">
           <button class="gft-cat active" data-category="all">All</button>
           <button class="gft-cat" data-category="sans-serif">Sans</button>
@@ -312,6 +436,11 @@
     const panel = document.getElementById('gft-panel');
     const search = document.getElementById('gft-search');
     const selector = document.getElementById('gft-selector');
+    const weightSelect = document.getElementById('gft-weight');
+    const sizeField = document.getElementById('gft-size');
+    const lineHeightSlider = document.getElementById('gft-line-height');
+    const lineHeightValue = document.getElementById('gft-lh-value');
+    const importantCheckbox = document.getElementById('gft-important');
     const list = document.getElementById('gft-list');
     const current = document.getElementById('gft-current');
     const resetBtn = document.getElementById('gft-reset');
@@ -387,23 +516,43 @@
       if (loadedFonts.has(fontName)) return;
       loadedFonts.add(fontName);
       const link = document.createElement('link');
-      link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@300;400;500;700&display=swap`;
+      link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@300;400;500;600;700;800;900&display=swap`;
       link.rel = 'stylesheet';
       document.head.appendChild(link);
     }
 
     // Apply font to elements matching selector
     function applyFont(fontName) {
+      if (!fontName) return;
       loadFont(fontName);
+      currentFont = fontName;
+
       const sel = getSelector();
+      const weight = weightSelect.value;
+      const sizeInput = sizeField.value.trim();
+      const lineHeight = lineHeightSlider.value;
+      const useImportant = importantCheckbox.checked;
+
+      // Parse size: add px if it's just a number
+      const size = sizeInput ? (/^\d+(\.\d+)?$/.test(sizeInput) ? sizeInput + 'px' : sizeInput) : null;
+      const priority = useImportant ? 'important' : '';
+
       try {
         const elements = document.querySelectorAll(sel);
         elements.forEach(el => {
-          // Store original font if not already stored
+          // Store original styles if not already stored
           if (!originalFonts.has(el)) {
-            originalFonts.set(el, el.style.fontFamily);
+            originalFonts.set(el, {
+              fontFamily: el.style.fontFamily,
+              fontWeight: el.style.fontWeight,
+              fontSize: el.style.fontSize,
+              lineHeight: el.style.lineHeight
+            });
           }
-          el.style.fontFamily = `"${fontName}", sans-serif`;
+          el.style.setProperty('font-family', `"${fontName}", sans-serif`, priority);
+          el.style.setProperty('font-weight', weight, priority);
+          if (size) el.style.setProperty('font-size', size, priority);
+          el.style.setProperty('line-height', lineHeight, priority);
         });
         current.textContent = `Current: ${fontName}`;
       } catch (e) {
@@ -413,15 +562,29 @@
 
     // Reset to original
     resetBtn.addEventListener('click', () => {
-      originalFonts.forEach((originalValue, el) => {
-        el.style.fontFamily = originalValue;
+      originalFonts.forEach((original, el) => {
+        el.style.fontFamily = original.fontFamily;
+        el.style.fontWeight = original.fontWeight;
+        el.style.fontSize = original.fontSize;
+        el.style.lineHeight = original.lineHeight;
       });
       originalFonts.clear();
+      currentFont = null;
       current.textContent = `Current: ${defaultFont}`;
     });
 
     // Search input
     search.addEventListener('input', renderFonts);
+
+    // Live update controls
+    lineHeightSlider.addEventListener('input', () => {
+      lineHeightValue.textContent = lineHeightSlider.value;
+      applyFont(currentFont);
+    });
+
+    weightSelect.addEventListener('change', () => applyFont(currentFont));
+    sizeField.addEventListener('input', () => applyFont(currentFont));
+    importantCheckbox.addEventListener('change', () => applyFont(currentFont));
 
     // Category filter
     categories.forEach(btn => {

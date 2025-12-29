@@ -19,16 +19,18 @@ A lightweight, self-contained JavaScript widget that lets users preview Google F
 - **Font application**: Sets `document.body.style.fontFamily` directly
 
 ## Current Limitations
-- No font weight/style selection
 - No persistence across refresh (intentional)
 
-## Selector Feature
-Users can enter any CSS selector in the input field (defaults to `body`). Examples:
-- `*` - all elements
-- `h1, h2, h3` - all headings
-- `.content` - elements with class "content"
+## Controls
+- **CSS Selector** - target specific elements (defaults to `body`)
+- **Font Weight** - dropdown: 300 Light through 900 Black
+- **Font Size** - text input, auto-appends `px` if no unit provided
+- **Line Height** - slider from -0.5 to 5
+- **!important** - checkbox to force override existing styles
 
-Original fonts are stored in a Map and restored on reset.
+All controls trigger live updates via `applyFont(currentFont)`.
+
+Original styles (fontFamily, fontWeight, fontSize, lineHeight) stored in a Map and restored on reset.
 
 ## Usage (via jsDelivr CDN)
 ```html
