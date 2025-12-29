@@ -14,6 +14,20 @@ Add this to your HTML:
 
 That's it. A small "Aa" button will appear in the bottom-right corner of your page.
 
+## Bookmarklet
+
+Want to test fonts on any website without editing code? Create a bookmarklet:
+
+1. Create a new bookmark in your browser
+2. Name it "Font Tester"
+3. Paste this as the URL:
+
+```javascript
+javascript:(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/gh/draganbabic/google-font-tester@main/google-font-tester.js';document.body.appendChild(s);})();
+```
+
+4. Visit any website and click the bookmark to activate the font tester
+
 ## Features
 
 - 80+ popular Google Fonts
