@@ -374,17 +374,17 @@
     }
     #gft-categories {
       display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
+      gap: 4px;
+      flex-wrap: nowrap;
     }
     .gft-cat {
       background: #2a2a2a;
       color: #999;
       border: none;
-      padding: 5px 10px;
+      padding: 5px 8px;
       border-radius: 4px;
       cursor: pointer;
-      font-size: 12px;
+      font-size: 11px;
       transition: all 0.15s;
     }
     .gft-cat:hover {
