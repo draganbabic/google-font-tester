@@ -195,6 +195,7 @@
     #gft-search {
       width: 100%;
       padding: 10px 12px;
+      margin-top: 12px;
       background: #2a2a2a;
       border: 1px solid #333;
       border-radius: 6px;
@@ -321,10 +322,14 @@
       accent-color: #0057ff;
       cursor: pointer;
     }
+    .gft-divider {
+      height: 1px;
+      background: #333;
+      margin: 12px 0;
+    }
     #gft-categories {
       display: flex;
       gap: 6px;
-      margin-top: 12px;
       flex-wrap: wrap;
     }
     .gft-cat {
@@ -390,7 +395,6 @@
           <span id="gft-title">Font Preview</span>
           <button id="gft-reset">Reset</button>
         </div>
-        <input id="gft-search" type="text" placeholder="Search fonts...">
         <input id="gft-selector" type="text" placeholder="body">
         <div id="gft-controls">
           <div class="gft-control-row">
@@ -414,6 +418,7 @@
             <label><input id="gft-important" type="checkbox"> Force !important</label>
           </div>
         </div>
+        <div class="gft-divider"></div>
         <div id="gft-categories">
           <button class="gft-cat active" data-category="all">All</button>
           <button class="gft-cat" data-category="sans-serif">Sans</button>
@@ -422,6 +427,7 @@
           <button class="gft-cat" data-category="handwriting">Script</button>
           <button class="gft-cat" data-category="monospace">Mono</button>
         </div>
+        <input id="gft-search" type="text" placeholder="Search fonts...">
       </div>
       <div id="gft-list"></div>
       <div id="gft-current">Current: Default</div>

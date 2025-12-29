@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Font Tester</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      line-height: 1.7;
+      color: #1a1a1a;
+      background: #fff;
+      padding: 4rem 2rem;
+    }
+    main {
+      width: 50%;
+      max-width: 30em;
+      margin: 0 auto;
+    }
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      line-height: 1.2;
+    }
+    h2 {
+      font-size: 1.25rem;
+      font-weight: 500;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    p {
+      margin-bottom: 1.5rem;
+    }
+    ul {
+      margin-bottom: 1.5rem;
+      padding-left: 1.25rem;
+    }
+    li {
+      margin-bottom: 0.5rem;
+    }
+    code {
+      font-family: monospace;
+      background: #f5f5f5;
+      padding: 0.15em 0.4em;
+      border-radius: 3px;
+      font-size: 0.9em;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 1rem;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin-bottom: 1.5rem;
+    }
+    pre code {
+      background: none;
+      padding: 0;
+    }
+    strong {
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Google Font Tester</h1>
+
+    <p>A lightweight widget for previewing Google Fonts on any website. Add one line of code and get a floating font picker that lets you instantly test 80+ popular fonts.</p>
+
+    <h2>Installation</h2>
+
+    <p>Add this to your HTML:</p>
+
+    <pre><code>&lt;script src="google-font-tester.js"&gt;&lt;/script&gt;</code></pre>
+
+    <p>That's it. A small "Aa" button will appear in the bottom-right corner of your page.</p>
+
+    <h2>Features</h2>
+
+    <ul>
+      <li>80+ popular Google Fonts</li>
+      <li>Filter by category: Sans, Serif, Display, Script, Mono</li>
+      <li>Search fonts by name</li>
+      <li><strong>Custom CSS selector</strong> - target specific elements (defaults to <code>body</code>)</li>
+      <li><strong>Font weight</strong> - select from 300 (Light) to 900 (Black)</li>
+      <li><strong>Font size</strong> - enter any value (e.g., <code>16</code>, <code>1.5rem</code>, <code>14px</code>)</li>
+      <li><strong>Line height</strong> - adjustable slider</li>
+      <li><strong>Force !important</strong> - override existing styles when needed</li>
+      <li>Live preview - changes apply instantly as you adjust settings</li>
+      <li>Lazy-loads fonts as you scroll for performance</li>
+      <li>Reset button to restore all original styles</li>
+      <li>Dark theme UI</li>
+      <li>Zero dependencies</li>
+      <li>Nothing persists - refresh to reset</li>
+    </ul>
+
+    <h2>Use Cases</h2>
+
+    <ul>
+      <li>Designers exploring font options for a project</li>
+      <li>Developers testing font readability</li>
+      <li>Quick font comparisons without editing CSS</li>
+    </ul>
+
+    <h2>License</h2>
+
+    <p>MIT</p>
+  </main>
+
+  <script src="google-font-tester.js"></script>
+</body>
+</html>
