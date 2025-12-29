@@ -184,17 +184,23 @@
       pointer-events: auto;
     }
     #gft-close {
-      background: none;
+      background: #333;
       border: none;
-      color: #666;
-      font-size: 20px;
+      color: #999;
+      font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
+      width: 24px;
+      height: 24px;
       padding: 0;
-      margin-left: 8px;
-      line-height: 1;
-      transition: color 0.15s;
+      margin-left: 6px;
+      line-height: 24px;
+      text-align: center;
+      border-radius: 4px;
+      transition: background 0.15s, color 0.15s;
     }
     #gft-close:hover {
+      background: #444;
       color: #fff;
     }
     #gft-header {
@@ -220,7 +226,8 @@
       background: #333;
       color: #999;
       border: none;
-      padding: 4px 10px;
+      height: 24px;
+      padding: 0 10px;
       border-radius: 4px;
       cursor: pointer;
       font-size: 12px;
@@ -403,6 +410,12 @@
       transition: background 0.15s;
     }
     .gft-item:hover { background: #2a2a2a; }
+    .gft-item.selected {
+      background: #0057ff22;
+      border-left: 3px solid #0057ff;
+      padding-left: 13px;
+    }
+    .gft-item.selected:hover { background: #0057ff33; }
     .gft-item-name {
       font-size: 14px;
       margin-bottom: 2px;
@@ -435,7 +448,7 @@
             <span id="gft-title">Font Preview</span>
             <div id="gft-title-actions">
               <button id="gft-reset">Reset</button>
-              <button id="gft-close">&times;</button>
+              <button id="gft-close" title="Minimize panel">&#8211;</button>
             </div>
           </div>
         <input id="gft-selector" type="text" placeholder="body">
@@ -522,12 +535,6 @@
       panel.classList.remove('open');
     });
 
-    // Close on outside click
-    document.addEventListener('click', (e) => {
-      if (!widget.contains(e.target)) {
-        panel.classList.remove('open');
-      }
-    });
 
     // Render font list
     function renderFonts() {
@@ -544,7 +551,7 @@
       }
 
       list.innerHTML = filtered.map(font => `
-        <div class="gft-item" data-font="${font.family}">
+        <div class="gft-item${currentFont === font.family ? ' selected' : ''}" data-font="${font.family}">
           <div class="gft-item-name">${font.family}</div>
           <div class="gft-item-preview">The quick brown fox</div>
         </div>
@@ -564,7 +571,11 @@
 
       list.querySelectorAll('.gft-item').forEach(item => {
         observer.observe(item);
-        item.addEventListener('click', () => applyFont(item.dataset.font));
+        item.addEventListener('click', () => {
+          list.querySelectorAll('.gft-item.selected').forEach(el => el.classList.remove('selected'));
+          item.classList.add('selected');
+          applyFont(item.dataset.font);
+        });
       });
     }
 
@@ -627,6 +638,7 @@
       });
       originalFonts.clear();
       currentFont = null;
+      list.querySelectorAll('.gft-item.selected').forEach(el => el.classList.remove('selected'));
       current.textContent = `Current: ${defaultFont}`;
     });
 
