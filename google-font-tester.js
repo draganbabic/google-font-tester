@@ -121,6 +121,7 @@
   let loadedFonts = new Set();
   let originalFonts = new Map(); // stores original fonts for targeted elements
   let currentFont = null; // tracks currently applied font for live updates
+  let fontObserver = null; // tracks IntersectionObserver for cleanup
 
   // Inject styles
   const style = document.createElement('style');
@@ -557,25 +558,25 @@
         </div>
       `).join('');
 
+      // Clean up previous observer to prevent memory leak
+      if (fontObserver) {
+        fontObserver.disconnect();
+      }
+
       // Lazy load font previews
-      const observer = new IntersectionObserver((entries) => {
+      fontObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             const fontName = entry.target.dataset.font;
             loadFont(fontName);
             entry.target.querySelector('.gft-item-preview').style.fontFamily = `"${fontName}", sans-serif`;
-            observer.unobserve(entry.target);
+            fontObserver.unobserve(entry.target);
           }
         });
       }, { root: list, threshold: 0 });
 
       list.querySelectorAll('.gft-item').forEach(item => {
-        observer.observe(item);
-        item.addEventListener('click', () => {
-          list.querySelectorAll('.gft-item.selected').forEach(el => el.classList.remove('selected'));
-          item.classList.add('selected');
-          applyFont(item.dataset.font);
-        });
+        fontObserver.observe(item);
       });
     }
 
@@ -586,6 +587,10 @@
       const link = document.createElement('link');
       link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName)}:wght@300;400;500;600;700;800;900&display=swap`;
       link.rel = 'stylesheet';
+      link.onerror = () => {
+        loadedFonts.delete(fontName);
+        console.warn(`Google Font Tester: Failed to load "${fontName}". Google Fonts may be blocked on this network.`);
+      };
       document.head.appendChild(link);
     }
 
@@ -640,6 +645,15 @@
       currentFont = null;
       list.querySelectorAll('.gft-item.selected').forEach(el => el.classList.remove('selected'));
       current.textContent = `Current: ${defaultFont}`;
+    });
+
+    // Event delegation for font list clicks (single listener instead of one per item)
+    list.addEventListener('click', (e) => {
+      const item = e.target.closest('.gft-item');
+      if (!item) return;
+      list.querySelectorAll('.gft-item.selected').forEach(el => el.classList.remove('selected'));
+      item.classList.add('selected');
+      applyFont(item.dataset.font);
     });
 
     // Search input

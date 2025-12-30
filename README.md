@@ -51,6 +51,16 @@ javascript:(function(){var s=document.createElement('script');s.src='https://cdn
 - Developers testing font readability
 - Quick font comparisons without editing CSS
 
+## Content Security Policy (CSP)
+
+If your site uses CSP, add these directives:
+
+```
+style-src 'unsafe-inline';
+connect-src fonts.googleapis.com;
+font-src fonts.gstatic.com;
+```
+
 ## License
 
 MIT

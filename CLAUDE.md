@@ -50,3 +50,9 @@ GitHub raw URLs don't work for hotlinking JS (wrong MIME type). jsDelivr serves 
 
 ## Build/Test
 No build process. Open `test.html` in a browser to test locally.
+
+## Content Security Policy (CSP)
+If the host site uses CSP, these directives are required:
+- `style-src 'unsafe-inline'` - for injected widget styles
+- `connect-src fonts.googleapis.com` - for font CSS requests
+- `font-src fonts.gstatic.com` - for actual font file downloads
