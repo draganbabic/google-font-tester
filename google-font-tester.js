@@ -194,7 +194,6 @@
       width: 24px;
       height: 24px;
       padding: 0;
-      margin-left: 6px;
       line-height: 24px;
       text-align: center;
       border-radius: 4px;
@@ -218,12 +217,13 @@
     #gft-title-actions {
       display: flex;
       align-items: center;
+      gap: 6px;
     }
     #gft-title {
       font-weight: 600;
       font-size: 15px;
     }
-    #gft-reset {
+    #gft-reset, #gft-copy {
       background: #333;
       color: #999;
       border: none;
@@ -234,7 +234,13 @@
       font-size: 12px;
       transition: background 0.15s, color 0.15s;
     }
-    #gft-reset:hover {
+    #gft-copy {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 6px;
+    }
+    #gft-reset:hover, #gft-copy:hover {
       background: #444;
       color: #fff;
     }
@@ -277,8 +283,6 @@
       flex-direction: column;
       gap: 6px;
       margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid #333;
     }
     .gft-control-row {
       display: flex;
@@ -449,6 +453,7 @@
             <span id="gft-title">Font Preview</span>
             <div id="gft-title-actions">
               <button id="gft-reset">Reset</button>
+              <button id="gft-copy" title="Copy CSS"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
               <button id="gft-close" title="Minimize panel">&#8211;</button>
             </div>
           </div>
@@ -509,6 +514,7 @@
     const list = document.getElementById('gft-list');
     const current = document.getElementById('gft-current');
     const resetBtn = document.getElementById('gft-reset');
+    const copyBtn = document.getElementById('gft-copy');
     const categories = document.querySelectorAll('.gft-cat');
 
     // Get current selector target (defaults to body)
@@ -536,6 +542,43 @@
       panel.classList.remove('open');
     });
 
+    // Copy CSS to clipboard
+    copyBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const properties = [];
+
+      // Only include properties that were changed
+      if (currentFont) {
+        properties.push(`font-family: "${currentFont}", sans-serif;`);
+      }
+      if (weightSelect.value !== '400') {
+        properties.push(`font-weight: ${weightSelect.value};`);
+      }
+      if (sizeField.value.trim()) {
+        const size = sizeField.value.trim();
+        const sizeValue = /^\d+(\.\d+)?$/.test(size) ? size + 'px' : size;
+        properties.push(`font-size: ${sizeValue};`);
+      }
+      if (lineHeightSlider.value !== '1.5') {
+        properties.push(`line-height: ${lineHeightSlider.value};`);
+      }
+
+      if (properties.length === 0) {
+        current.textContent = 'Nothing to copy';
+        setTimeout(() => {
+          current.textContent = currentFont ? `Current: ${currentFont}` : `Current: ${defaultFont}`;
+        }, 1500);
+        return;
+      }
+
+      const css = properties.join('\n');
+      navigator.clipboard.writeText(css).then(() => {
+        current.textContent = 'Copied to clipboard!';
+        setTimeout(() => {
+          current.textContent = currentFont ? `Current: ${currentFont}` : `Current: ${defaultFont}`;
+        }, 1500);
+      });
+    });
 
     // Render font list
     function renderFonts() {
