@@ -28,11 +28,9 @@ javascript:(function(){var s=document.createElement('script');s.src='https://cdn
 
 4. Visit any website and click the bookmark to activate the font tester
 
-**Note:** Some sites (e.g., x.com) have strict Content Security Policy that blocks external scripts. For these sites, use a userscript manager like Tampermonkey, or paste the script directly in DevTools console:
+5. Tip: load up the test.html and generate a bookmarklet with your own API key so you can access the entire Google Fonts library.
 
-```javascript
-fetch('https://cdn.jsdelivr.net/gh/draganbabic/google-font-tester@main/google-font-tester.js').then(r=>r.text()).then(eval)
-```
+**Note:** Some sites (e.g., x.com) have strict Content Security Policy that blocks external scripts.
 
 ## Features
 
