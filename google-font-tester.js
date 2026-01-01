@@ -36,11 +36,11 @@
   'use strict';
 
   // API Configuration
-  const API_KEY = window.GFT_API_KEY || 'AIzaSyBwIX97bVWr3-6AIUvGkcNnmFgirefZ-Sw';
+  const API_KEY = window.GFT_API_KEY || 'AIzaSyCZR7KRVF2SxbY8hmKgf-cBuLaoBD0WuP8';
   const API_URL = `https://www.googleapis.com/webfonts/v1/webfonts?key=${API_KEY}&sort=popularity`;
 
   // Virtual scrolling constants
-  const ITEM_HEIGHT = 52;
+  const ITEM_HEIGHT = 76;
   const BUFFER = 5;
 
   // Fallback fonts (used if API fails)
@@ -460,25 +460,30 @@
       cursor: pointer;
       border-bottom: 1px solid #2a2a2a;
       transition: background 0.15s;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
     }
-    .gft-item:hover { background: #2a2a2a; }
+    .gft-item:hover,
+    .gft-item.focused { background: #2a2a2a; }
     .gft-item.selected {
       background: #0057ff22;
       border-left: 3px solid #0057ff;
       padding-left: 13px;
     }
-    .gft-item.selected:hover { background: #0057ff33; }
+    .gft-item.selected:hover,
+    .gft-item.selected.focused { background: #0057ff33; }
     .gft-item-name {
       font-size: 14px;
       margin-bottom: 2px;
       color: #888;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .gft-item-preview {
       font-size: 18px;
       color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     #gft-current {
       padding: 10px 12px;
@@ -707,10 +712,14 @@
       const visibleFonts = currentFiltered.slice(startIndex, endIndex);
       inner.innerHTML = visibleFonts.map((font, i) => {
         const actualIndex = startIndex + i;
-        const isSelected = actualIndex === selectedIndex;
+        const isFocused = actualIndex === selectedIndex;
+        const isSelected = font.family === currentFont;
         const top = actualIndex * ITEM_HEIGHT;
+        let classes = 'gft-item';
+        if (isFocused) classes += ' focused';
+        if (isSelected) classes += ' selected';
         return `
-          <div class="gft-item${isSelected ? ' selected' : ''}"
+          <div class="${classes}"
                data-font="${font.family}"
                data-index="${actualIndex}"
                style="position: absolute; top: ${top}px; left: 0; right: 0; height: ${ITEM_HEIGHT}px; box-sizing: border-box;">
@@ -745,14 +754,30 @@
       const inner = document.getElementById('gft-list-inner');
       if (!inner) return;
 
-      // Remove old selection
+      // Remove old focus
+      const oldFocused = inner.querySelector('.gft-item.focused');
+      if (oldFocused) oldFocused.classList.remove('focused');
+
+      // Add new focus
+      selectedIndex = newIndex;
+      const newFocused = inner.querySelector(`[data-index="${newIndex}"]`);
+      if (newFocused) newFocused.classList.add('focused');
+    }
+
+    // Update .selected class when a font is applied
+    function updateAppliedState(fontName) {
+      const inner = document.getElementById('gft-list-inner');
+      if (!inner) return;
+
+      // Remove old selected
       const oldSelected = inner.querySelector('.gft-item.selected');
       if (oldSelected) oldSelected.classList.remove('selected');
 
-      // Add new selection
-      selectedIndex = newIndex;
-      const newSelected = inner.querySelector(`[data-index="${newIndex}"]`);
-      if (newSelected) newSelected.classList.add('selected');
+      // Add new selected
+      if (fontName) {
+        const newSelected = inner.querySelector(`[data-font="${fontName}"]`);
+        if (newSelected) newSelected.classList.add('selected');
+      }
     }
 
     // Load a font from Google
@@ -818,7 +843,8 @@
       });
       originalFonts.clear();
       currentFont = null;
-      updateSelection(-1); // Clear selection without re-render
+      updateSelection(-1); // Clear focus
+      updateAppliedState(null); // Clear selected state
       let countText;
       if (usingFallback) {
         countText = currentFiltered.length === fonts.length
@@ -838,6 +864,7 @@
       if (!item) return;
       updateSelection(parseInt(item.dataset.index, 10));
       applyFont(item.dataset.font);
+      updateAppliedState(item.dataset.font);
     });
 
     // Scroll handler for virtual scrolling
@@ -866,7 +893,9 @@
         scrollToSelected();
       } else if (e.key === 'Enter' && selectedIndex >= 0) {
         e.preventDefault();
-        applyFont(currentFiltered[selectedIndex].family);
+        const fontName = currentFiltered[selectedIndex].family;
+        applyFont(fontName);
+        updateAppliedState(fontName);
       }
     });
 
