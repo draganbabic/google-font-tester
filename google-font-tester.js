@@ -167,7 +167,7 @@
       position: fixed;
       bottom: 20px;
       right: 20px;
-      z-index: 9999;
+      z-index: 2147483647;
       font-family: system-ui, -apple-system, sans-serif;
       font-size: 14px;
     }
@@ -813,6 +813,9 @@
       try {
         const elements = document.querySelectorAll(sel);
         elements.forEach(el => {
+          // Skip elements inside our panel
+          if (el.closest('#gft-panel')) return;
+
           // Store original styles if not already stored
           if (!originalFonts.has(el)) {
             originalFonts.set(el, {
