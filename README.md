@@ -28,6 +28,12 @@ javascript:(function(){var s=document.createElement('script');s.src='https://cdn
 
 4. Visit any website and click the bookmark to activate the font tester
 
+**Note:** Some sites (e.g., x.com) have strict Content Security Policy that blocks external scripts. For these sites, use a userscript manager like Tampermonkey, or paste the script directly in DevTools console:
+
+```javascript
+fetch('https://cdn.jsdelivr.net/gh/draganbabic/google-font-tester@main/google-font-tester.js').then(r=>r.text()).then(eval)
+```
+
 ## Features
 
 - **1700+ Google Fonts** via API (sorted by popularity)

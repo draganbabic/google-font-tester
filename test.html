@@ -160,6 +160,10 @@
 
     <p>Get a free API key from <a href="https://console.cloud.google.com/apis/credentials">Google Cloud Console</a> (enable the Web Fonts Developer API).</p>
 
+    <p><strong>Note:</strong> Some sites (e.g., x.com) have strict Content Security Policy that blocks external scripts. For these sites, use a userscript manager like Tampermonkey, or paste the script directly in DevTools console:</p>
+
+    <pre><code>fetch('https://cdn.jsdelivr.net/gh/draganbabic/google-font-tester@main/google-font-tester.js').then(r=>r.text()).then(eval)</code></pre>
+
     <h2>Features</h2>
 
     <ul>
