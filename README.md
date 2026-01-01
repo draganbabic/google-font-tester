@@ -1,6 +1,6 @@
 # Google Font Tester
 
-A lightweight widget for previewing Google Fonts on any website. Add one line of code and get a floating font picker that lets you instantly test 80+ popular fonts.
+A lightweight widget for previewing Google Fonts on any website. Add one line of code and get a floating font picker with access to 1700+ fonts via the Google Fonts API.
 
 ![Google Font Tester Panel](google-font-tester-panel.png)
 
@@ -30,20 +30,31 @@ javascript:(function(){var s=document.createElement('script');s.src='https://cdn
 
 ## Features
 
-- 80+ popular Google Fonts
+- **1700+ Google Fonts** via API (sorted by popularity)
 - Filter by category: Sans, Serif, Display, Script, Mono
 - Search fonts by name
+- **Keyboard navigation** - Arrow keys to browse, Enter to select
+- **Copy CSS** - export your font settings to clipboard
 - **Custom CSS selector** - target specific elements (defaults to `body`)
 - **Font weight** - select from 300 (Light) to 900 (Black)
 - **Font size** - enter any value (e.g., `16`, `1.5rem`, `14px`)
 - **Line height** - adjustable slider
 - **Force !important** - override existing styles when needed
-- Live preview - changes apply instantly as you adjust settings
-- Lazy-loads fonts as you scroll for performance
-- Reset button to restore all original styles
-- Dark theme UI
+- Virtual scrolling for smooth performance with large font lists
+- Falls back to 80 curated fonts if API is unavailable
 - Zero dependencies
 - Nothing persists - refresh to reset
+
+## Custom API Key
+
+The widget includes a default API key, but you can use your own:
+
+```html
+<script>window.GFT_API_KEY = 'your-api-key-here';</script>
+<script src="https://cdn.jsdelivr.net/gh/draganbabic/google-font-tester@main/google-font-tester.js"></script>
+```
+
+Get a free API key from [Google Cloud Console](https://console.cloud.google.com/apis/credentials) (enable the Web Fonts Developer API).
 
 ## Use Cases
 
@@ -57,7 +68,7 @@ If your site uses CSP, add these directives:
 
 ```
 style-src 'unsafe-inline';
-connect-src fonts.googleapis.com;
+connect-src fonts.googleapis.com www.googleapis.com;
 font-src fonts.gstatic.com;
 ```
 

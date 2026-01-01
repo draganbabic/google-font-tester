@@ -67,13 +67,75 @@
     strong {
       font-weight: 500;
     }
+    a {
+      color: #0066cc;
+    }
+    .bookmarklet-generator {
+      background: #f5f5f5;
+      padding: 1.25rem;
+      border-radius: 6px;
+      margin-bottom: 1.5rem;
+    }
+    .bookmarklet-generator label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+      color: #666;
+    }
+    .bookmarklet-generator input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+      font-family: monospace;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+    }
+    .bookmarklet-generator input:focus {
+      outline: none;
+      border-color: #0066cc;
+    }
+    .bookmarklet-output {
+      display: flex;
+      gap: 0.5rem;
+      align-items: stretch;
+    }
+    .bookmarklet-output code {
+      flex: 1;
+      display: block;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .bookmarklet-output button {
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      font-family: inherit;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .bookmarklet-output button:hover {
+      background: #333;
+    }
+    .bookmarklet-output button.copied {
+      background: #22863a;
+    }
   </style>
 </head>
 <body>
   <main>
     <h1>Google Font Tester</h1>
 
-    <p>A lightweight widget for previewing Google Fonts on any website. Add one line of code and get a floating font picker that lets you instantly test 80+ popular fonts.</p>
+    <p>A lightweight widget for previewing Google Fonts on any website. Add one line of code and get a floating font picker with access to 1700+ fonts via the Google Fonts API.</p>
 
     <h2>Installation</h2>
 
@@ -83,21 +145,36 @@
 
     <p>That's it. A small "Aa" button will appear in the bottom-right corner of your page.</p>
 
+    <h2>Bookmarklet</h2>
+
+    <p>Want to test fonts on any website without editing code? Generate a bookmarklet below, then drag it to your bookmarks bar or create a new bookmark and paste the code as the URL.</p>
+
+    <div class="bookmarklet-generator">
+      <label for="api-key-input">API Key (optional - leave blank to use default)</label>
+      <input type="text" id="api-key-input" placeholder="Enter your Google Fonts API key">
+      <div class="bookmarklet-output">
+        <code id="bookmarklet-code"></code>
+        <button id="copy-bookmarklet">Copy</button>
+      </div>
+    </div>
+
+    <p>Get a free API key from <a href="https://console.cloud.google.com/apis/credentials">Google Cloud Console</a> (enable the Web Fonts Developer API).</p>
+
     <h2>Features</h2>
 
     <ul>
-      <li>80+ popular Google Fonts</li>
+      <li><strong>1700+ Google Fonts</strong> via API (sorted by popularity)</li>
       <li>Filter by category: Sans, Serif, Display, Script, Mono</li>
       <li>Search fonts by name</li>
+      <li><strong>Keyboard navigation</strong> - Arrow keys to browse, Enter to select</li>
+      <li><strong>Copy CSS</strong> - export your font settings to clipboard</li>
       <li><strong>Custom CSS selector</strong> - target specific elements (defaults to <code>body</code>)</li>
       <li><strong>Font weight</strong> - select from 300 (Light) to 900 (Black)</li>
       <li><strong>Font size</strong> - enter any value (e.g., <code>16</code>, <code>1.5rem</code>, <code>14px</code>)</li>
       <li><strong>Line height</strong> - adjustable slider</li>
       <li><strong>Force !important</strong> - override existing styles when needed</li>
-      <li>Live preview - changes apply instantly as you adjust settings</li>
-      <li>Lazy-loads fonts as you scroll for performance</li>
-      <li>Reset button to restore all original styles</li>
-      <li>Dark theme UI</li>
+      <li>Virtual scrolling for smooth performance with large font lists</li>
+      <li>Falls back to 80 curated fonts if API is unavailable</li>
       <li>Zero dependencies</li>
       <li>Nothing persists - refresh to reset</li>
     </ul>
@@ -110,11 +187,54 @@
       <li>Quick font comparisons without editing CSS</li>
     </ul>
 
+    <h2>Content Security Policy (CSP)</h2>
+
+    <p>If your site uses CSP, add these directives:</p>
+
+    <pre><code>style-src 'unsafe-inline';
+connect-src fonts.googleapis.com www.googleapis.com;
+font-src fonts.gstatic.com;</code></pre>
+
     <h2>License</h2>
 
     <p>MIT</p>
   </main>
 
   <script src="google-font-tester.js"></script>
+  <script>
+    (function() {
+      const apiKeyInput = document.getElementById('api-key-input');
+      const bookmarkletCode = document.getElementById('bookmarklet-code');
+      const copyBtn = document.getElementById('copy-bookmarklet');
+      const scriptUrl = 'https://cdn.jsdelivr.net/gh/draganbabic/google-font-tester@main/google-font-tester.js';
+
+      function generateBookmarklet() {
+        const apiKey = apiKeyInput.value.trim();
+        let code;
+        if (apiKey) {
+          code = `javascript:(function(){window.GFT_API_KEY='${apiKey}';var s=document.createElement('script');s.src='${scriptUrl}';document.body.appendChild(s);})();`;
+        } else {
+          code = `javascript:(function(){var s=document.createElement('script');s.src='${scriptUrl}';document.body.appendChild(s);})();`;
+        }
+        bookmarkletCode.textContent = code;
+      }
+
+      apiKeyInput.addEventListener('input', generateBookmarklet);
+
+      copyBtn.addEventListener('click', function() {
+        navigator.clipboard.writeText(bookmarkletCode.textContent).then(() => {
+          copyBtn.textContent = 'Copied!';
+          copyBtn.classList.add('copied');
+          setTimeout(() => {
+            copyBtn.textContent = 'Copy';
+            copyBtn.classList.remove('copied');
+          }, 2000);
+        });
+      });
+
+      // Generate initial bookmarklet
+      generateBookmarklet();
+    })();
+  </script>
 </body>
 </html>

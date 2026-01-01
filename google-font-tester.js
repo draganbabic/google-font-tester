@@ -11,8 +11,12 @@
  * That's it! The widget will automatically initialize and appear
  * as a small "Aa" button in the bottom-right corner of your page.
  *
+ * Custom API Key (optional):
+ *   Set window.GFT_API_KEY before loading this script to use your own key:
+ *   <script>window.GFT_API_KEY = 'your-api-key-here';</script>
+ *
  * Features:
- *   - Search through 80+ popular Google Fonts
+ *   - Browse 1700+ Google Fonts via API (falls back to 80 curated fonts if API unavailable)
  *   - Filter by category: Sans, Serif, Display, Script, Mono
  *   - Custom CSS selector to target specific elements (defaults to body)
  *   - Font weight selector (300-900)
@@ -20,9 +24,9 @@
  *   - Line height slider
  *   - Force !important option to override existing styles
  *   - Live preview updates as you adjust settings
- *   - Lazy-loads fonts as you scroll for performance
- *   - Click any font to preview it on your site
- *   - Reset button to restore original styles
+ *   - Virtual scrolling for smooth performance with large font lists
+ *   - Keyboard navigation (Arrow keys + Enter)
+ *   - Copy CSS button to export your selections
  *   - Nothing persists - refresh to reset
  *
  * License: MIT
@@ -31,8 +35,16 @@
 (function() {
   'use strict';
 
-  // Popular Google Fonts with categories
-  const fonts = [
+  // API Configuration
+  const API_KEY = window.GFT_API_KEY || 'AIzaSyBwIX97bVWr3-6AIUvGkcNnmFgirefZ-Sw';
+  const API_URL = `https://www.googleapis.com/webfonts/v1/webfonts?key=${API_KEY}&sort=popularity`;
+
+  // Virtual scrolling constants
+  const ITEM_HEIGHT = 52;
+  const BUFFER = 5;
+
+  // Fallback fonts (used if API fails)
+  const fallbackFonts = [
     // Sans-serif
     { family: 'Inter', category: 'sans-serif' },
     { family: 'Roboto', category: 'sans-serif' },
@@ -117,11 +129,36 @@
     { family: 'Cousine', category: 'monospace' },
   ];
 
+  // State
+  let fonts = [...fallbackFonts]; // Will be replaced by API data
+  let fontsLoaded = false;
+  let usingFallback = false;
   let currentCategory = 'all';
   let loadedFonts = new Set();
   let originalFonts = new Map(); // stores original fonts for targeted elements
   let currentFont = null; // tracks currently applied font for live updates
   let fontObserver = null; // tracks IntersectionObserver for cleanup
+  let currentFiltered = []; // filtered fonts for virtual scrolling
+  let selectedIndex = -1; // keyboard navigation index
+  let searchTimeout = null; // debounce timer
+
+  // Fetch fonts from Google Fonts API
+  async function fetchFonts() {
+    if (fontsLoaded) return;
+    try {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error('API request failed');
+      const data = await res.json();
+      fonts = data.items.map(f => ({ family: f.family, category: f.category }));
+      fontsLoaded = true;
+      usingFallback = false;
+    } catch (e) {
+      console.warn('Google Fonts API failed, using fallback list:', e.message);
+      fonts = [...fallbackFonts];
+      fontsLoaded = true;
+      usingFallback = true;
+    }
+  }
 
   // Inject styles
   const style = document.createElement('style');
@@ -404,15 +441,28 @@
       flex: 1;
       overflow-y: auto;
       min-height: 0;
+      position: relative;
+      outline: none;
     }
     #gft-list::-webkit-scrollbar { width: 8px; }
     #gft-list::-webkit-scrollbar-track { background: #1a1a1a; }
     #gft-list::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+    #gft-list-inner {
+      position: relative;
+    }
+    .gft-loading {
+      padding: 40px 20px;
+      text-align: center;
+      color: #666;
+    }
     .gft-item {
       padding: 10px 16px;
       cursor: pointer;
       border-bottom: 1px solid #2a2a2a;
       transition: background 0.15s;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
     .gft-item:hover { background: #2a2a2a; }
     .gft-item.selected {
@@ -527,10 +577,17 @@
     current.textContent = `Current: ${defaultFont}`;
 
     // Open panel when clicking trigger or collapsed panel
-    panel.addEventListener('click', (e) => {
+    panel.addEventListener('click', async (e) => {
       if (!panel.classList.contains('open')) {
         e.stopPropagation();
         panel.classList.add('open');
+
+        // Show loading state and fetch fonts from API
+        if (!fontsLoaded) {
+          list.innerHTML = '<div class="gft-loading">Loading fonts...</div>';
+          await fetchFonts();
+        }
+
         renderFonts();
         setTimeout(() => search.focus(), 200);
       }
@@ -580,47 +637,122 @@
       });
     });
 
-    // Render font list
-    function renderFonts() {
+    // Filter fonts based on search and category
+    function getFilteredFonts() {
       const query = search.value.toLowerCase();
-      const filtered = fonts.filter(font => {
+      return fonts.filter(font => {
         const matchesSearch = font.family.toLowerCase().includes(query);
         const matchesCategory = currentCategory === 'all' || font.category === currentCategory;
         return matchesSearch && matchesCategory;
       });
+    }
 
-      if (filtered.length === 0) {
-        list.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">No fonts found</div>';
+    // Render font list with virtual scrolling
+    function renderFonts() {
+      currentFiltered = getFilteredFonts();
+
+      // Update status bar with count
+      let countText;
+      if (usingFallback) {
+        countText = currentFiltered.length === fonts.length
+          ? `API unavailable · ${fonts.length} popular fonts`
+          : `${currentFiltered.length} of ${fonts.length} fonts`;
+      } else {
+        countText = currentFiltered.length === fonts.length
+          ? `${fonts.length} fonts`
+          : `${currentFiltered.length} of ${fonts.length} fonts`;
+      }
+      if (!currentFont) {
+        current.textContent = countText;
+      }
+
+      if (currentFiltered.length === 0) {
+        list.innerHTML = '<div class="gft-loading">No fonts found</div>';
         return;
       }
 
-      list.innerHTML = filtered.map(font => `
-        <div class="gft-item${currentFont === font.family ? ' selected' : ''}" data-font="${font.family}">
-          <div class="gft-item-name">${font.family}</div>
-          <div class="gft-item-preview">The quick brown fox</div>
-        </div>
-      `).join('');
+      // Preserve selected index if current font is in filtered list
+      if (currentFont) {
+        selectedIndex = currentFiltered.findIndex(f => f.family === currentFont);
+      } else {
+        selectedIndex = -1;
+      }
 
-      // Clean up previous observer to prevent memory leak
+      // Create inner container for virtual scrolling
+      const totalHeight = currentFiltered.length * ITEM_HEIGHT;
+      list.innerHTML = `<div id="gft-list-inner" style="height: ${totalHeight}px;"></div>`;
+
+      // Initial render
+      renderVisibleItems();
+    }
+
+    // Render only visible items (virtual scrolling)
+    function renderVisibleItems() {
+      const inner = document.getElementById('gft-list-inner');
+      if (!inner) return;
+
+      const scrollTop = list.scrollTop;
+      const listHeight = list.clientHeight;
+      const visibleCount = Math.ceil(listHeight / ITEM_HEIGHT) + BUFFER * 2;
+
+      const startIndex = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - BUFFER);
+      const endIndex = Math.min(currentFiltered.length, startIndex + visibleCount);
+
+      // Clean up previous observer
       if (fontObserver) {
         fontObserver.disconnect();
       }
 
-      // Lazy load font previews
+      // Render visible slice
+      const visibleFonts = currentFiltered.slice(startIndex, endIndex);
+      inner.innerHTML = visibleFonts.map((font, i) => {
+        const actualIndex = startIndex + i;
+        const isSelected = actualIndex === selectedIndex;
+        const top = actualIndex * ITEM_HEIGHT;
+        return `
+          <div class="gft-item${isSelected ? ' selected' : ''}"
+               data-font="${font.family}"
+               data-index="${actualIndex}"
+               style="position: absolute; top: ${top}px; left: 0; right: 0; height: ${ITEM_HEIGHT}px; box-sizing: border-box;">
+            <div class="gft-item-name">${font.family}</div>
+            <div class="gft-item-preview">The quick brown fox</div>
+          </div>
+        `;
+      }).join('');
+
+      // Lazy load font previews for visible items
       fontObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             const fontName = entry.target.dataset.font;
             loadFont(fontName);
-            entry.target.querySelector('.gft-item-preview').style.fontFamily = `"${fontName}", sans-serif`;
+            const preview = entry.target.querySelector('.gft-item-preview');
+            if (preview) {
+              preview.style.fontFamily = `"${fontName}", sans-serif`;
+            }
             fontObserver.unobserve(entry.target);
           }
         });
       }, { root: list, threshold: 0 });
 
-      list.querySelectorAll('.gft-item').forEach(item => {
+      inner.querySelectorAll('.gft-item').forEach(item => {
         fontObserver.observe(item);
       });
+    }
+
+    // Update selection without re-rendering (prevents flicker)
+    function updateSelection(newIndex) {
+      const inner = document.getElementById('gft-list-inner');
+      if (!inner) return;
+
+      // Remove old selection
+      const oldSelected = inner.querySelector('.gft-item.selected');
+      if (oldSelected) oldSelected.classList.remove('selected');
+
+      // Add new selection
+      selectedIndex = newIndex;
+      const newSelected = inner.querySelector(`[data-index="${newIndex}"]`);
+      if (newSelected) newSelected.classList.add('selected');
     }
 
     // Load a font from Google
@@ -686,21 +818,72 @@
       });
       originalFonts.clear();
       currentFont = null;
-      list.querySelectorAll('.gft-item.selected').forEach(el => el.classList.remove('selected'));
-      current.textContent = `Current: ${defaultFont}`;
+      updateSelection(-1); // Clear selection without re-render
+      let countText;
+      if (usingFallback) {
+        countText = currentFiltered.length === fonts.length
+          ? `API unavailable · ${fonts.length} popular fonts`
+          : `${currentFiltered.length} of ${fonts.length} fonts`;
+      } else {
+        countText = currentFiltered.length === fonts.length
+          ? `${fonts.length} fonts`
+          : `${currentFiltered.length} of ${fonts.length} fonts`;
+      }
+      current.textContent = countText;
     });
 
     // Event delegation for font list clicks (single listener instead of one per item)
     list.addEventListener('click', (e) => {
       const item = e.target.closest('.gft-item');
       if (!item) return;
-      list.querySelectorAll('.gft-item.selected').forEach(el => el.classList.remove('selected'));
-      item.classList.add('selected');
+      updateSelection(parseInt(item.dataset.index, 10));
       applyFont(item.dataset.font);
     });
 
-    // Search input
-    search.addEventListener('input', renderFonts);
+    // Scroll handler for virtual scrolling
+    list.addEventListener('scroll', renderVisibleItems);
+
+    // Debounced search input
+    search.addEventListener('input', () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(renderFonts, 150);
+    });
+
+    // Keyboard navigation
+    list.setAttribute('tabindex', '0');
+    list.addEventListener('keydown', (e) => {
+      if (currentFiltered.length === 0) return;
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const newIndex = Math.min(selectedIndex + 1, currentFiltered.length - 1);
+        updateSelection(newIndex);
+        scrollToSelected();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const newIndex = Math.max(selectedIndex - 1, 0);
+        updateSelection(newIndex);
+        scrollToSelected();
+      } else if (e.key === 'Enter' && selectedIndex >= 0) {
+        e.preventDefault();
+        applyFont(currentFiltered[selectedIndex].family);
+      }
+    });
+
+    // Scroll selected item into view
+    function scrollToSelected() {
+      if (selectedIndex < 0) return;
+      const itemTop = selectedIndex * ITEM_HEIGHT;
+      const itemBottom = itemTop + ITEM_HEIGHT;
+      const viewTop = list.scrollTop;
+      const viewBottom = viewTop + list.clientHeight;
+
+      if (itemTop < viewTop) {
+        list.scrollTop = itemTop;
+      } else if (itemBottom > viewBottom) {
+        list.scrollTop = itemBottom - list.clientHeight;
+      }
+    }
 
     // Live update controls
     lineHeightSlider.addEventListener('input', () => {
