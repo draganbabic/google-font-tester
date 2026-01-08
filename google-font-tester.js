@@ -141,6 +141,7 @@
   let currentFiltered = []; // filtered fonts for virtual scrolling
   let selectedIndex = -1; // keyboard navigation index
   let searchTimeout = null; // debounce timer
+  let enforceStyleEl = null; // injected style element for enforce mode
 
   // Fetch fonts from Google Fonts API
   async function fetchFonts() {
@@ -409,6 +410,44 @@
       accent-color: #0057ff;
       cursor: pointer;
     }
+    .gft-toggle-row {
+      justify-content: flex-start;
+    }
+    .gft-toggle-row label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #888;
+    }
+    .gft-toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      background: #333;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .gft-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: #666;
+      border-radius: 50%;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .gft-toggle.active {
+      background: #0057ff;
+    }
+    .gft-toggle.active::after {
+      transform: translateX(16px);
+      background: #fff;
+    }
     .gft-divider {
       height: 1px;
       background: #333;
@@ -534,6 +573,12 @@
           <div class="gft-control-row gft-important-row">
             <label><input id="gft-important" type="checkbox"> Force !important</label>
           </div>
+          <div class="gft-control-row gft-toggle-row">
+            <label>
+              <div id="gft-enforce" class="gft-toggle"></div>
+              Enforce on all elements
+            </label>
+          </div>
         </div>
         <div class="gft-divider"></div>
         <div id="gft-categories">
@@ -566,6 +611,7 @@
     const lineHeightSlider = document.getElementById('gft-line-height');
     const lineHeightValue = document.getElementById('gft-lh-value');
     const importantCheckbox = document.getElementById('gft-important');
+    const enforceToggle = document.getElementById('gft-enforce');
     const list = document.getElementById('gft-list');
     const current = document.getElementById('gft-current');
     const resetBtn = document.getElementById('gft-reset');
@@ -800,15 +846,43 @@
       loadFont(fontName);
       currentFont = fontName;
 
-      const sel = getSelector();
       const weight = weightSelect.value;
       const sizeInput = sizeField.value.trim();
       const lineHeight = lineHeightSlider.value;
       const useImportant = importantCheckbox.checked;
+      const isEnforceMode = enforceToggle.classList.contains('active');
 
       // Parse size: add px if it's just a number
       const size = sizeInput ? (/^\d+(\.\d+)?$/.test(sizeInput) ? sizeInput + 'px' : sizeInput) : null;
       const priority = useImportant ? 'important' : '';
+      const imp = useImportant ? ' !important' : '';
+
+      // If enforce mode is on, inject CSS for font-family
+      if (isEnforceMode) {
+        // Exclusions: icon fonts, code blocks, form elements
+        const exclusions = [
+          '#gft-picker', '#gft-picker *',  // Our widget
+          'i', 'svg', '[class*="fa-"]', '[class*="icon"]', '[class*="material-"]', // Icons
+          'pre', 'code', 'kbd', 'samp', // Code blocks
+          'input', 'textarea', 'select', 'button' // Form elements
+        ].join(', ');
+
+        // Build CSS rule - only enforce font-family
+        let css = `*:not(${exclusions.split(', ').join('):not(')}) {\n`;
+        css += `  font-family: "${fontName}", sans-serif${imp};\n`;
+        css += `}\n`;
+
+        // Create or update the enforce style element
+        if (!enforceStyleEl) {
+          enforceStyleEl = document.createElement('style');
+          enforceStyleEl.id = 'gft-enforce-style';
+          document.head.appendChild(enforceStyleEl);
+        }
+        enforceStyleEl.textContent = css;
+      }
+
+      // Always apply other properties via inline styles to selector matches
+      const sel = getSelector();
 
       try {
         const elements = document.querySelectorAll(sel);
@@ -825,7 +899,10 @@
               lineHeight: el.style.lineHeight
             });
           }
-          el.style.setProperty('font-family', `"${fontName}", sans-serif`, priority);
+          // Only apply font-family inline if NOT in enforce mode
+          if (!isEnforceMode) {
+            el.style.setProperty('font-family', `"${fontName}", sans-serif`, priority);
+          }
           el.style.setProperty('font-weight', weight, priority);
           if (size) el.style.setProperty('font-size', size, priority);
           el.style.setProperty('line-height', lineHeight, priority);
@@ -838,6 +915,7 @@
 
     // Reset to original
     resetBtn.addEventListener('click', () => {
+      // Clear inline styles
       originalFonts.forEach((original, el) => {
         el.style.fontFamily = original.fontFamily;
         el.style.fontWeight = original.fontWeight;
@@ -845,6 +923,14 @@
         el.style.lineHeight = original.lineHeight;
       });
       originalFonts.clear();
+
+      // Clear enforce mode
+      if (enforceStyleEl) {
+        enforceStyleEl.remove();
+        enforceStyleEl = null;
+      }
+      enforceToggle.classList.remove('active');
+
       currentFont = null;
       updateSelection(-1); // Clear focus
       updateAppliedState(null); // Clear selected state
@@ -926,6 +1012,19 @@
     weightSelect.addEventListener('change', () => applyFont(currentFont));
     sizeField.addEventListener('input', () => applyFont(currentFont));
     importantCheckbox.addEventListener('change', () => applyFont(currentFont));
+
+    // Enforce toggle handler
+    enforceToggle.addEventListener('click', () => {
+      const isActive = enforceToggle.classList.toggle('active');
+
+      // If turning off enforce mode, remove the injected style
+      if (!isActive && enforceStyleEl) {
+        enforceStyleEl.remove();
+        enforceStyleEl = null;
+      }
+
+      applyFont(currentFont);
+    });
 
     // Category filter
     categories.forEach(btn => {
