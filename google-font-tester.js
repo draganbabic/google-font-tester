@@ -171,6 +171,7 @@
       z-index: 2147483647;
       font-family: system-ui, -apple-system, sans-serif;
       font-size: 14px;
+      line-height: 1.4;
     }
     #gft-panel {
       display: flex;
@@ -395,21 +396,6 @@
       min-width: 28px;
       text-align: right;
     }
-    .gft-important-row {
-      justify-content: flex-start;
-    }
-    .gft-important-row label {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-    }
-    #gft-important {
-      width: 14px;
-      height: 14px;
-      accent-color: #0057ff;
-      cursor: pointer;
-    }
     .gft-toggle-row {
       justify-content: flex-start;
     }
@@ -570,8 +556,11 @@
             <input id="gft-line-height" type="range" min="-0.5" max="5" step="0.1" value="1.5">
             <span id="gft-lh-value">1.5</span>
           </div>
-          <div class="gft-control-row gft-important-row">
-            <label><input id="gft-important" type="checkbox"> Force !important</label>
+          <div class="gft-control-row gft-toggle-row">
+            <label>
+              <div id="gft-important" class="gft-toggle"></div>
+              Force !important
+            </label>
           </div>
           <div class="gft-control-row gft-toggle-row">
             <label>
@@ -849,7 +838,7 @@
       const weight = weightSelect.value;
       const sizeInput = sizeField.value.trim();
       const lineHeight = lineHeightSlider.value;
-      const useImportant = importantCheckbox.checked;
+      const useImportant = importantCheckbox.classList.contains('active');
       const isEnforceMode = enforceToggle.classList.contains('active');
 
       // Parse size: add px if it's just a number
@@ -924,12 +913,13 @@
       });
       originalFonts.clear();
 
-      // Clear enforce mode
+      // Clear toggles
       if (enforceStyleEl) {
         enforceStyleEl.remove();
         enforceStyleEl = null;
       }
       enforceToggle.classList.remove('active');
+      importantCheckbox.classList.remove('active');
 
       currentFont = null;
       updateSelection(-1); // Clear focus
@@ -1011,7 +1001,10 @@
 
     weightSelect.addEventListener('change', () => applyFont(currentFont));
     sizeField.addEventListener('input', () => applyFont(currentFont));
-    importantCheckbox.addEventListener('change', () => applyFont(currentFont));
+    importantCheckbox.addEventListener('click', () => {
+      importantCheckbox.classList.toggle('active');
+      applyFont(currentFont);
+    });
 
     // Enforce toggle handler
     enforceToggle.addEventListener('click', () => {
